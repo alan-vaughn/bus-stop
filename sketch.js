@@ -39,7 +39,6 @@
 'use strict';
 
 var tileCount = 20;
-var actRandomSeed = 0;
 
 var actStrokeCap;
 
@@ -59,7 +58,23 @@ function setup() {
     colorRight = color(87, 35, 129, alphaRight);
 }
 
+
+
+
 function draw() {
+    const boroughToBaseColor = {
+        B: color('hsl(180, 100%, 50%)'),
+        M: color('hsl(0, 100%, 50%)'),
+        Q: color('hsl(60, 100%, 50%)'),
+        QM: color('hsl(30, 100%, 50%)'),
+        BX: color('hsl(270, 100%, 50%)'),
+        BM: color('hsl(240, 100%, 50%)'),
+        BXM: color('hsl(20, 100%, 50%)'),
+        X: color('hsl(300, 100%, 50%)'),
+        S: color('hsl(210, 100%, 50%)'),
+        SIM: color('hsl(110, 100%, 50%)'),
+    }
+
     clear();
     strokeCap(actStrokeCap);
 
@@ -73,6 +88,15 @@ function draw() {
 
     randomSeed(busStopId);
 
+    const lineColors = stop.routes.map((route) => {
+        const color = boroughToBaseColor[route.split(/\d+/)[0]]
+
+        return color;
+    })
+
+    lineColors.push(color('rgba(255, 255, 255, 0)'));
+    lineColors.push(color('rgba(255, 255, 255, 0)'));
+
     for (var gridY = 0; gridY < tileCount; gridY++) {
         for (var gridX = 0; gridX < tileCount; gridX++) {
 
@@ -81,15 +105,16 @@ function draw() {
 
             var toggle = int(random(0, 2));
 
-            if (toggle == 0) {
-                stroke(colorLeft);
-                strokeWeight(random(0, 15));
+            if (toggle === 0) {
+
+                stroke(random(lineColors));
+                strokeWeight(random(5, 15));
                 line(posX, posY, posX + width / tileCount, posY + height / tileCount);
             }
-            if (toggle == 1) {
-                stroke(colorRight);
+            if (toggle === 1) {
+                stroke(random(lineColors));
                 // strokeWeight(mouseY / 15);
-                strokeWeight(random(0, 15));
+                strokeWeight(random(5, 15));
                 line(posX, posY + width / tileCount, posX + height / tileCount, posY);
             }
         }
@@ -99,7 +124,7 @@ function draw() {
 
     // outside border
     strokeWeight(borderWidth);
-    stroke(colorLeft);
+    stroke('#aaa');
     noFill();
     rect(
         borderWidth / 2,
