@@ -1,130 +1,192 @@
-// P_2_1_1_02
-//
-// Generative Gestaltung – Creative Coding im Web
-// ISBN: 978-3-87439-902-9, First Edition, Hermann Schmidt, Mainz, 2018
-// Benedikt Groß, Hartmut Bohnacker, Julia Laub, Claudius Lazzeroni
-// with contributions by Joey Lee and Niels Poldervaart
-// Copyright 2018
-//
-// http://www.generative-gestaltung.de
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-/**
- * changing strokeweight on diagonals in a grid with colors
- *
- * MOUSE
- * position x          : left diagonal strokeweight
- * position y          : right diagonal strokeweight
- * left click          : new random layout
- *
- * KEYS
- * s                   : save png
- * 1                   : round strokecap
- * 2                   : square strokecap
- * 3                   : project strokecap
- * 4                   : color left diagonal
- * 5                   : color right diagonal
- * 6                   : transparency left diagonal
- * 7                   : transparency right diagonal
- * 0                   : default
- */
 'use strict';
 
-var tileCount = 20;
-
-var actStrokeCap;
-
-var colorLeft;
-var colorRight;
-var alphaLeft = 255;
-var alphaRight = 255;
+const tileSize = 40;
 
 var canvasHeight = 800;
 var canvasWidth = 300;
 
+const allRoutes = [
+    'B42', 'B82', 'B25', 'B17', 'Q24', 'B12', 'B14', 'Q56', 'B15',
+    'B83', 'B65', 'B45', 'B91A', 'B84', 'B82+', 'B41', 'B44', 'B46',
+    'B49', 'B31', 'B2', 'B44+', 'B46+', 'B1', 'B47', 'Q54', 'B48',
+    'B54', 'Q55', 'Q58', 'B52', 'B60', 'B38', 'B26', 'B13', 'B57',
+    'B7', 'B20', 'B62', 'Q59', 'B24', 'B32', 'B39', 'B8', 'B61', 'B35',
+    'B68', 'B63', 'B43', 'B11', 'B70', 'B67', 'B16', 'B4', 'B9', 'B37',
+    'B69', 'B36', 'B6', 'B3', 'B64', 'X27', 'X28', 'B74', 'X38', 'X37',
+    'BX41', 'BX39', 'BX41+', 'BX12+', 'BX26', 'BX22', 'BX40', 'BX42',
+    'BX5', 'BX29', 'BX4', 'BX4A', 'BX34', 'BX12', 'BX24', 'BX16',
+    'BX28', 'BX38', 'BX30', 'BX15', 'M100', 'BX7', 'BX20', 'BX10',
+    'BX1', 'BX2', 'BX9', 'BX13', 'BX18', 'BX3', 'BX6+', 'BX33', 'BX8',
+    'BX17', 'BX21', 'BX36', 'BX35', 'BX46', 'BX19', 'BX31', 'BX32',
+    'BX6', 'BX27', 'BX11', 'M14A', 'M14D', 'M60+', 'M9', 'M42', 'M50',
+    'M86+', 'M20', 'M34+', 'M34A+', 'M66', 'M23+', 'M22', 'M21', 'M8',
+    'M79+', 'M35', 'M55', 'M72', 'M57', 'M12', 'M116', 'M10', 'M5',
+    'M4', 'M104', 'M3', 'M2', 'M11', 'M106', 'M96', 'M98', 'M15+',
+    'M7', 'M1', 'M31', 'M101', 'M102', 'M103', 'M15', 'Q44+', 'Q20B',
+    'Q20A', 'Q28', 'Q32', 'Q15', 'Q15A', 'Q26', 'Q48', 'Q13', 'Q31',
+    'Q76', 'Q16', 'Q12', 'Q17', 'Q84', 'Q4', 'Q85', 'Q5', 'Q30', 'Q42',
+    'Q3', 'Q77', 'Q1', 'Q43', 'X63', 'Q27', 'Q88', 'Q36', 'Q2', 'X68',
+    'Q83', 'X64', 'Q46', 'SIM33C', 'SIM9', 'SIM15', 'SIM32', 'SIM7',
+    'S40', 'S90', 'S53', 'S66', 'S76', 'S86', 'S93', 'SIM1C', 'SIM35',
+    'SIM34', 'SIM3C', 'SIM3', 'SIM22', 'S46', 'S96', 'S48', 'S98',
+    'S54', 'S51', 'S81', 'S52', 'S42', 'S74', 'SIM8X', 'S78', 'S84',
+    'SIM10', 'SIM6', 'SIM5', 'SIM1', 'SIM26', 'SIM25', 'SIM2', 'SIM31',
+    'SIM4', 'SIM4C', 'SIM8', 'S55', 'S56', 'SIM4X', 'SIM33', 'SIM30',
+    'SIM11', 'S62', 'S92', 'S61', 'S91', 'S79+', 'S44', 'S94', 'S57',
+    'S89', 'S59'
+];
+
+
+const boroughToBaseHue = {
+    M: 0,
+    B: 240,
+    Q: 120,
+    BX: 180,
+    S: 270,
+    // Bucket express routes into same category
+    QM: 300,
+    BM: 300,
+    BXM: 300,
+    X: 300,
+    SIM: 300,
+};
+
+const routeToColor = {}
+const routeToTextColor = {}
+
 function setup() {
+    colorMode(HSB)
+
     createCanvas(canvasWidth, canvasHeight);
 
-    actStrokeCap = ROUND;
-    colorLeft = color(197, 0, 123, alphaLeft);
-    colorRight = color(87, 35, 129, alphaRight);
+    allRoutes.forEach((route) => {
+        const routeNumber = parseInt(route.match(/\d+/)[0])
+
+        // use routeNumber as seed, so that changing list ordering doesn't change color
+        randomSeed(routeNumber);
+
+        const flip = routeNumber % 2 === 1 ? -1 : 1;
+        const hue = boroughToBaseHue[route.split(/\d+/)[0]] + ((routeNumber % 3) * flip);
+        const saturation = 30 + random(60);
+        const brightness = 50 + random(40);
+        const alpha = 0.2 + random()
+
+        routeToColor[route] = color(
+           hue, saturation, brightness
+        );
+        routeToTextColor[route] = color(
+            hue, saturation, brightness
+        )
+    })
 }
 
 
-
-
 function draw() {
-    const boroughToBaseColor = {
-        B: color('hsl(180, 100%, 50%)'),
-        M: color('hsl(0, 100%, 50%)'),
-        Q: color('hsl(60, 100%, 50%)'),
-        QM: color('hsl(30, 100%, 50%)'),
-        BX: color('hsl(270, 100%, 50%)'),
-        BM: color('hsl(240, 100%, 50%)'),
-        BXM: color('hsl(20, 100%, 50%)'),
-        X: color('hsl(300, 100%, 50%)'),
-        S: color('hsl(210, 100%, 50%)'),
-        SIM: color('hsl(110, 100%, 50%)'),
-    }
-
     clear();
-    strokeCap(actStrokeCap);
 
-    var params = getURLParams();
-    // random real stop for drawing
-    var busStopId = params.stop_id ? parseInt(params.stop_id) : 300613;
+    const params = getURLParams();
+    const busStopId = params.stop_id
+        ? parseInt(params.stop_id)
+        // random real stop for drawing
+        : 300613;
 
-    var stop = allStops.find(function(stop) {
-        return stop.stop_id === busStopId
-    });
+    const stop = allStops.find((stop) => stop.stop_id === busStopId);
 
     randomSeed(busStopId);
 
-    const lineColors = stop.routes.map((route) => {
-        const color = boroughToBaseColor[route.split(/\d+/)[0]]
+    let routes = ['Blank']
+    routes = routes.concat(stop.routes);
+    rectMode(CENTER);
 
-        return color;
-    })
+    for (let gridY = 0; gridY < 25; gridY++) {
+        for (let gridX = 0; gridX < 15; gridX++) {
 
-    lineColors.push(color('rgba(255, 255, 255, 0)'));
-    lineColors.push(color('rgba(255, 255, 255, 0)'));
+            let posX = tileSize * gridX + 10;
+            let posY = tileSize * gridY + 230;
 
-    for (var gridY = 0; gridY < tileCount; gridY++) {
-        for (var gridX = 0; gridX < tileCount; gridX++) {
+            let route = random(routes)
 
-            var posX = width / tileCount * gridX;
-            var posY = ((height - 200) / tileCount * gridY)  + 200;
+            if (route === 'Blank') continue;
+            let lineColor = routeToColor[route];
+            noStroke();
+            fill(lineColor);
 
-            var toggle = int(random(0, 2));
-
-            if (toggle === 0) {
-
-                stroke(random(lineColors));
-                strokeWeight(random(5, 15));
-                line(posX, posY, posX + width / tileCount, posY + height / tileCount);
+            const pattern = random(routes.length <= 3 ? 6 : 10);
+            if (pattern <= 2) {
+                arc(
+                    posX + tileSize,
+                    posY,
+                    tileSize,
+                    tileSize,
+                    HALF_PI,
+                    -HALF_PI
+                );
+            } else if (pattern <= 4){
+                arc(
+                    posX,
+                    posY - tileSize / 2,
+                    tileSize * 2,
+                    tileSize * 2,
+                    0,
+                    HALF_PI
+                )
+            } else if (pattern <= 6) {
+                arc(
+                    posX + tileSize,
+                    posY + tileSize / 2,
+                    tileSize * 2,
+                    tileSize * 2,
+                    PI,
+                    -HALF_PI
+                );
+            } else if (pattern <= 7) {
+                arc(
+                    posX + tileSize,
+                    posY,
+                    tileSize,
+                    tileSize,
+                    HALF_PI,
+                    -HALF_PI
+                );
+                arc(posX, posY, tileSize, tileSize, -HALF_PI, HALF_PI);
+            } else if (pattern <= 8) {
+                rect(posX + tileSize / 2, posY, tileSize, tileSize);
+                fill('#fff');
+                arc(posX + tileSize, posY, tileSize, tileSize, HALF_PI, -HALF_PI);
+                arc(posX, posY, tileSize, tileSize, -HALF_PI, HALF_PI);
+            } else if (pattern <= 9) {
+                rect(posX + tileSize / 2, posY, tileSize, tileSize);
+                fill('#fff')
+                arc(
+                    posX + tileSize,
+                    posY + tileSize / 2,
+                    tileSize * 2,
+                    tileSize * 2,
+                    PI,
+                    -HALF_PI
+                )
+            } else if (pattern <= 10) {
+                rect(posX + tileSize / 2, posY, tileSize, tileSize);
+                fill('#fff')
+                arc(
+                    posX + tileSize,
+                    posY,
+                    tileSize,
+                    tileSize,
+                    HALF_PI,
+                    -HALF_PI
+                )
             }
-            if (toggle === 1) {
-                stroke(random(lineColors));
-                // strokeWeight(mouseY / 15);
-                strokeWeight(random(5, 15));
-                line(posX, posY + width / tileCount, posX + height / tileCount, posY);
-            }
+
         }
     }
 
-    var borderWidth = 20;
+    let borderWidth = 20;
 
     // outside border
+    rectMode(CORNER);
     strokeWeight(borderWidth);
-    stroke('#aaa');
+    stroke('#ddd');
     noFill();
     rect(
         borderWidth / 2,
@@ -134,69 +196,61 @@ function draw() {
     );
 
     // top line
-    line(
-        0, 200, canvasWidth, 200
-    );
-
+    line(0, 200, canvasWidth, 200);
+    // Stop Name
+    textFont('Roboto Mono');
     noStroke();
-    fill(colorRight);
+    fill('#212121');
     textSize(30);
     textAlign(CENTER);
     text(
         stop.stop_name.replace('/', '/\n'), canvasWidth / 2, 100
     );
 
+    // individual routes
+    textSize(14);
+    Array.from(stop.routes).sort().forEach((route, index) => {
+        // Draw the route name
+        noStroke();
+        fill(routeToTextColor[route]);
+        text(route, 40 + index * 48, 185);
+
+        // Draw a divider
+        stroke('#ddd');
+        strokeWeight(3);
+        line(
+            60 + index * 48,
+            170,
+            60 + index * 48,
+            200
+        );
+    })
+
 }
 
 function keyReleased() {
-    if (key == 's' || key == 'S') saveCanvas(gd.timestamp(), 'png');
-
-    if (key == '1') actStrokeCap = ROUND;
-    if (key == '2') actStrokeCap = SQUARE;
-    if (key == '3') actStrokeCap = PROJECT;
-
-    var black = color(0, 0, 0, 255);
-    if (key == '4') {
-        if (colorsEqual(colorLeft, black)) {
-            colorLeft = color(197, 0, 123, alphaLeft);
-        } else {
-            colorLeft = color(0, 0, 0, alphaLeft);
-        }
-    }
-    if (key == '5') {
-        if (colorsEqual(colorRight, black)) {
-            colorRight = color(87, 35, 129, alphaRight);
-        } else {
-            colorRight = color(0, 0, 0, alphaRight);
-        }
-    }
-
-    if (key == '6') {
-        if (alphaLeft == 255) {
-            alphaLeft = 127;
-        } else {
-            alphaLeft = 255;
-        }
-        colorLeft = color(red(colorLeft), green(colorLeft), blue(colorLeft), alphaLeft);
-    }
-    if (key == '7') {
-        if (alphaRight == 255) {
-            alphaRight = 127;
-        } else {
-            alphaRight = 255;
-        }
-        colorRight = color(red(colorRight), green(colorRight), blue(colorRight), alphaRight);
-    }
-
-    if (key == '0') {
-        actStrokeCap = ROUND;
-        alphaLeft = 255;
-        alphaRight = 255;
-        colorLeft = color(0, 0, 0, alphaLeft);
-        colorRight = color(0, 0, 0, alphaRight);
-    }
+    if (key == 's' || key == 'S') saveCanvas('download', 'png');
 }
 
-function colorsEqual(col1, col2) {
-    return col1.toString() == col2.toString();
-}
+
+// working diagonal lines implementation
+// let posX = width / tileCount * gridX;
+// let posY = ((height - 200) / tileCount * gridY)  + 200;
+//
+//
+//
+// let route = random(routes)
+//
+// let lineColor = route === 'Blank' ? color('rgba(255, 255, 255, 0)') : routeToColor[route];
+//
+// let toggle = int(random(0, 2));
+// if (toggle === 0) {
+//     stroke(lineColor);
+//     strokeWeight(random(3, 10));
+//     line(posX, posY, posX + width / tileCount, posY + height / tileCount);
+// }
+// if (toggle === 1) {
+//     stroke(lineColor);
+//     strokeWeight(random(3, 10));
+//     line(posX, posY + width / tileCount, posX + height / tileCount, posY);
+// }
