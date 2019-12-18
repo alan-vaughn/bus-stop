@@ -44,15 +44,10 @@ const boroughToBaseHue = {
     BX: 180,
     S: 270,
     // Bucket express routes into same category
-    QM: 300,
-    BM: 300,
-    BXM: 300,
-    X: 300,
-    SIM: 300,
+    QM: 300, BM: 300, BXM: 300, X: 300, SIM: 300,
 };
 
 const routeToColor = {}
-const routeToTextColor = {}
 
 function setup() {
     colorMode(HSB)
@@ -69,29 +64,20 @@ function setup() {
         const hue = boroughToBaseHue[route.split(/\d+/)[0]] + ((routeNumber % 3) * flip);
         const saturation = 30 + random(60);
         const brightness = 50 + random(40);
-        const alpha = 0.2 + random()
 
-        routeToColor[route] = color(
-           hue, saturation, brightness
-        );
-        routeToTextColor[route] = color(
-            hue, saturation, brightness
-        )
+        routeToColor[route] = color(hue, saturation, brightness);
     })
 }
 
-
 function draw() {
-    clear();
+    clear()
 
     const params = getURLParams();
-    const busStopId = params.stop_id
-        ? parseInt(params.stop_id)
-        // random real stop for drawing
-        : 300613;
+    const busStopId = params.stop_id ? parseInt(params.stop_id) : 300613;
 
     const stop = allStops.find((stop) => stop.stop_id === busStopId);
 
+    // seed with the bus stop id so that design is consistant between runs
     randomSeed(busStopId);
 
     let routes = ['Blank']
@@ -212,7 +198,7 @@ function draw() {
     Array.from(stop.routes).sort().forEach((route, index) => {
         // Draw the route name
         noStroke();
-        fill(routeToTextColor[route]);
+        fill(routeToColor[route]);
         text(route, 40 + index * 48, 185);
 
         // Draw a divider
@@ -229,7 +215,9 @@ function draw() {
 }
 
 function keyReleased() {
-    if (key == 's' || key == 'S') saveCanvas('download', 'png');
+    const params = getURLParams();
+    const busStopId = params.stop_id ? params.stop_id : '300613';
+    if (key == 's' || key == 'S') saveCanvas(busStopId, 'png');
 }
 
 
